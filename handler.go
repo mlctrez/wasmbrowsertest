@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"github.com/agnivade/wasmbrowsertest/filesys"
+	"github.com/mccutchen/go-httpbin/httpbin"
 	"html/template"
 	"io"
 	"log"
@@ -22,14 +23,15 @@ import (
 var indexHTML string
 
 type wasmServer struct {
-	indexTmpl     *template.Template
-	wasmFile      string
-	wasmExecJS    []byte
-	args          []string
-	envMap        map[string]string
-	logger        *log.Logger
-	fsHandler     *filesys.FsHandler
-	securityToken string
+	indexTmpl      *template.Template
+	wasmFile       string
+	wasmExecJS     []byte
+	args           []string
+	envMap         map[string]string
+	logger         *log.Logger
+	fsHandler      *filesys.FsHandler
+	httpBinHandler http.Handler
+	securityToken  string
 }
 
 func NewWASMServer(wasmFile string, args []string, coverageFile string, l *log.Logger) (http.Handler, error) {
@@ -48,6 +50,8 @@ func NewWASMServer(wasmFile string, args []string, coverageFile string, l *log.L
 		return nil, err
 	}
 	srv.fsHandler = filesys.NewHandler(srv.securityToken, l)
+
+	srv.httpBinHandler = httpbin.NewHTTPBin().Handler()
 
 	for _, env := range os.Environ() {
 		vars := strings.SplitN(env, "=", 2)
@@ -113,6 +117,8 @@ func (ws *wasmServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		if strings.HasPrefix(r.URL.Path, "/fs/") {
 			ws.fsHandler.ServeHTTP(w, r)
+		} else {
+			ws.httpBinHandler.ServeHTTP(w, r)
 		}
 	}
 }

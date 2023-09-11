@@ -7,6 +7,7 @@ require (
 	github.com/chromedp/chromedp v0.8.6
 	github.com/go-interpreter/wagon v0.6.0
 	github.com/google/pprof v0.0.0-20221103000818-d260c55eee4c
+	github.com/mccutchen/go-httpbin v1.1.1
 )
 
 require (
